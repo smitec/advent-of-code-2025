@@ -87,32 +87,61 @@ pub fn day02(filename: String, part_b: bool) -> Result<()> {
     for range in clean.split(',') {
         //println!("{:?}", range);
         let (r_low, r_high) = range.split_once('-').unwrap();
-        let mut x = r_low.parse::<i64>().unwrap();
         let r_low = r_low.parse::<i64>().unwrap();
         let r_high = r_high.parse::<i64>().unwrap();
+        let mut x = r_low;
 
-        while x <= r_high {
-            let digits = x.to_string().len();
-            if digits % 2 == 0 {
-                let half = (digits / 2) as usize;
-                let half_digit = x.to_string()[..half].parse::<i64>().unwrap();
-                let mut h: i64 = half_digit;
-                let upper = 10i64.pow(half as u32);
-                //println!("{:?} -> upper", upper);
-                while h < upper {
-                    //println!("{:?} -> h", h);
-                    let test = h + h * 10i64.pow(half as u32);
-                    if test >= r_low {
-                        if test > r_high {
-                            break;
+        if !part_b {
+            while x <= r_high {
+                let digits = x.to_string().len();
+                if digits % 2 == 0 {
+                    let half = (digits / 2) as usize;
+                    let half_digit = x.to_string()[..half].parse::<i64>().unwrap();
+                    let mut h: i64 = half_digit;
+                    let upper = 10i64.pow(half as u32);
+                    //println!("{:?} -> upper", upper);
+                    while h < upper {
+                        //println!("{:?} -> h", h);
+                        let test = h + h * 10i64.pow(half as u32);
+                        if test >= r_low {
+                            if test > r_high {
+                                break;
+                            }
+                            //println!("{:?} -> test", test);
+                            total += test;
                         }
-                        //println!("{:?} -> test", test);
-                        total += test;
+                        h += 1;
                     }
-                    h += 1;
                 }
+                x = 10i64.pow(digits as u32);
             }
-            x = 10i64.pow(digits as u32);
+        } else {
+            // part b version, can be any repeating sequence
+            // ugly version is start at 1, repeat it until its > min and < max
+            // if repeated once is > max quit
+            // println!("--");
+            let mut t = 1;
+            let mut added: Vec<i64> = Vec::new();
+            while t <= r_high {
+                let mut repeat = format!("{}{}", t, t);
+
+                if repeat.parse::<i64>().unwrap() > r_high {
+                    break;
+                }
+
+                while repeat.parse::<i64>().unwrap() <= r_high {
+                    let val = repeat.parse::<i64>().unwrap();
+                    if val >= r_low {
+                        if !added.contains(&val) {
+                            // println!("{:?} -> val", val);
+                            total += val;
+                            added.push(val);
+                        }
+                    }
+                    repeat = format!("{}{}", repeat, t);
+                }
+                t += 1;
+            }
         }
     }
 
@@ -123,5 +152,5 @@ pub fn day02(filename: String, part_b: bool) -> Result<()> {
 
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
-    day02("./inputs/day02a.txt".to_string(), false);
+    day02("./inputs/day02a.txt".to_string(), true);
 }
