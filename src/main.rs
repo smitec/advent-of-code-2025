@@ -28,33 +28,33 @@ pub fn day01(filename: String, part_b: bool) -> Result<()> {
 
         println!("Starting at {:?}", current);
         let initial = current;
-        current = (current + val * mul);
+        let turns = val.div_euclid(100).abs();
+        current = current + val.rem_euclid(100) * mul;
         println!("Ending at {:?} ({:?})", current, current.rem_euclid(100));
 
-        if current > 100 {
-            println!(
-                "Adding for full Rotation {:?} -> {:?} = {:?}",
-                line,
-                current,
-                current.div_euclid(100)
-            );
-            count += current.div_euclid(100).abs();
-            if initial == 0 {
-                count -= 1;
+        if part_b {
+            if current > 100 {
+                println!(
+                    "Adding for full Rotation {:?} -> {:?} = {:?}",
+                    line,
+                    current,
+                    current.div_euclid(100)
+                );
+                count += 1
             }
-        }
 
-        if current < 0 {
-            println!(
-                "Adding for Negative Rotation {:?} -> {:?} = {:?}",
-                line,
-                current,
-                (current as f32 / 100f32).abs().ceil()
-            );
-            count += (current as f32 / 100f32).abs().ceil() as i32;
-            if initial == 0 {
+            if current < 0 && initial > 0 {
+                println!(
+                    "Adding for mini Negative Rotation {:?} -> {:?} = {:?}",
+                    line, current, 1
+                );
+                count += 1;
+            }
+
+            if initial == 0 && current.rem_euclid(100) == 0 {
                 count -= 1;
             }
+            count += turns;
         }
 
         current = current.rem_euclid(100);
@@ -71,5 +71,5 @@ pub fn day01(filename: String, part_b: bool) -> Result<()> {
 }
 
 fn main() {
-    day01("./inputs/day01a.txt".to_string(), false);
+    day01("./inputs/day01a.txt".to_string(), true);
 }
