@@ -150,7 +150,59 @@ pub fn day02(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day03(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut total = 0;
+
+    for line in content.lines() {
+        let mut max_first = 0;
+        let mut overall_max = 0;
+        for i in 0..line.len() - 1 {
+            let first = line
+                .chars()
+                .nth(i)
+                .unwrap()
+                .to_string()
+                .parse::<i32>()
+                .unwrap();
+            if first > max_first {
+                max_first = first;
+            } else {
+                continue;
+            }
+
+            let mut max_second = 0;
+            for j in i + 1..line.len() {
+                let second = line
+                    .chars()
+                    .nth(j)
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap();
+                if second > max_second {
+                    max_second = second;
+                }
+            }
+
+            if max_first * 10 + max_second > overall_max {
+                overall_max = max_first * 10 + max_second;
+            }
+        }
+
+        // println!("{:?} overall max", overall_max);
+        total += overall_max;
+    }
+
+    println!("{:?}", total);
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
-    day02("./inputs/day02a.txt".to_string(), true);
+    // day02("./inputs/day02a.txt".to_string(), true);
+    day03("./inputs/day03a.txt".to_string(), true);
 }
