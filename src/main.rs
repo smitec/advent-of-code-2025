@@ -150,53 +150,62 @@ pub fn day02(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+fn max_substr(digits: String, len: usize, cache: &mut HashMap<(String, usize), i64>) -> i64 {
+    if len == 1 {
+        return digits
+            .chars()
+            .map(|x| x.to_string().parse::<i64>().unwrap())
+            .max()
+            .unwrap();
+    }
+
+    let mut max = 0;
+    let mut max_current = 0;
+    for i in 0..digits.len() - len + 1 {
+        let current = digits
+            .chars()
+            .nth(i)
+            .unwrap()
+            .to_string()
+            .parse::<i64>()
+            .unwrap();
+        if current > max_current {
+            let d = digits[i + 1..].to_string();
+            let l = len - 1;
+            let pls: i64;
+            if cache.contains_key(&(d.clone(), l)) {
+                pls = *cache.get(&(d, l)).unwrap();
+            } else {
+                pls = max_substr(d.clone(), l, cache);
+                cache.insert((d, l), pls);
+            }
+            let check = current * 10i64.pow((len - 1) as u32) + pls;
+            if check > max {
+                max = check;
+            }
+            max_current = current;
+        }
+    }
+
+    return max;
+}
+
+// 17613
+
 #[instrument]
 pub fn day03(filename: String, part_b: bool) -> Result<()> {
     let content = fs::read_to_string(filename).context("Couldn't read input")?;
 
-    let mut total = 0;
+    let mut total_a = 0;
+    let mut total_b = 0;
 
     for line in content.lines() {
-        let mut max_first = 0;
-        let mut overall_max = 0;
-        for i in 0..line.len() - 1 {
-            let first = line
-                .chars()
-                .nth(i)
-                .unwrap()
-                .to_string()
-                .parse::<i32>()
-                .unwrap();
-            if first > max_first {
-                max_first = first;
-            } else {
-                continue;
-            }
-
-            let mut max_second = 0;
-            for j in i + 1..line.len() {
-                let second = line
-                    .chars()
-                    .nth(j)
-                    .unwrap()
-                    .to_string()
-                    .parse::<i32>()
-                    .unwrap();
-                if second > max_second {
-                    max_second = second;
-                }
-            }
-
-            if max_first * 10 + max_second > overall_max {
-                overall_max = max_first * 10 + max_second;
-            }
-        }
-
-        // println!("{:?} overall max", overall_max);
-        total += overall_max;
+        let mut cache: HashMap<(String, usize), i64> = HashMap::new();
+        total_a += max_substr(line.to_string(), 2, &mut cache);
+        total_b += max_substr(line.to_string(), 12, &mut cache);
     }
 
-    println!("{:?}", total);
+    println!("{:?} {:?}", total_a, total_b);
 
     Ok(())
 }
