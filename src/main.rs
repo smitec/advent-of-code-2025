@@ -190,8 +190,6 @@ fn max_substr(digits: String, len: usize, cache: &mut HashMap<(String, usize), i
     return max;
 }
 
-// 17613
-
 #[instrument]
 pub fn day03(filename: String, part_b: bool) -> Result<()> {
     let content = fs::read_to_string(filename).context("Couldn't read input")?;
@@ -210,8 +208,74 @@ pub fn day03(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day04(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut width = 0;
+    let mut height = 0;
+    let mut map: HashSet<(i32, i32)> = HashSet::new();
+
+    let mut moveable: Vec<(i32, i32)> = Vec::new();
+    let mut first = true;
+
+    for line in content.lines() {
+        width = line.len() as i32;
+
+        for (i, v) in line.chars().enumerate() {
+            if v == '@' {
+                map.insert((height, i as i32));
+            }
+        }
+        height += 1;
+    }
+
+    let mut removed = 0;
+    while first || moveable.len() > 0 {
+        moveable = Vec::new();
+        first = false;
+
+        for (row, col) in map.iter() {
+            let mut surrounds = 0;
+            for dr in [-1, 0, 1] {
+                for dc in [-1, 0, 1] {
+                    if dr == 0 && dc == 0 {
+                        continue;
+                    }
+
+                    if map.contains(&(row + dr, col + dc)) {
+                        surrounds += 1;
+                    }
+                }
+            }
+            // println!("{:?} {:?} -> {:?}", row, col, surrounds);
+            if surrounds < 4 {
+                moveable.push((*row, *col));
+            }
+        }
+
+        if !part_b {
+            println!("{:?}", moveable.len());
+            return Ok(());
+        }
+
+        for v in moveable.iter() {
+            removed += 1;
+            map.remove(&v);
+        }
+    }
+
+    println!("{:?}", removed);
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
-    day03("./inputs/day03a.txt".to_string(), true);
+    // day03("./inputs/day03a.txt".to_string(), true);
+    day04("./inputs/day04mini.txt".to_string(), false); // 13
+    day04("./inputs/day04a.txt".to_string(), false); // 1560
+    day04("./inputs/day04mini.txt".to_string(), true); // 43
+    day04("./inputs/day04a.txt".to_string(), true); // 
 }
