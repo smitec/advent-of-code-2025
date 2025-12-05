@@ -270,12 +270,103 @@ pub fn day04(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day05(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut ranges: Vec<(i64, i64)> = Vec::new();
+    let mut items: Vec<i64> = Vec::new();
+    let mut range_mode: bool = true;
+
+    for line in content.lines() {
+        if line.len() == 0 {
+            range_mode = false;
+            continue;
+        }
+
+        if range_mode {
+            let (l, r) = line.split_once('-').unwrap();
+            let l = l.parse::<i64>().unwrap();
+            let r = r.parse::<i64>().unwrap();
+            ranges.push((l, r));
+        } else {
+            items.push(line.parse::<i64>().unwrap());
+        }
+    }
+
+    if !part_b {
+        let mut count = 0;
+        for item in items.iter() {
+            for (lower, upper) in ranges.iter() {
+                if item >= lower && item <= upper {
+                    count += 1;
+                    break;
+                }
+            }
+        }
+
+        println!("{:?}", count);
+    } else {
+        // Need all the non-overlapping ranges
+        // insert a range a - b
+        // when looking to insert a new range, loop through all existin ranges
+        // If the range has a partial overlap, update the original range
+        // If the range does not overlap, add it
+        // What if the new range overlaps 2 ranges?
+        // Is there a data structure for this?
+        // SkipList maybe?
+        // How about. Sort by min.
+        // Grab the first range.
+        // Consume ranges until end of current range is < start of the next range
+        // Repeat until end.
+        // That feels like it'd work.
+        ranges.sort_unstable();
+        let mut index = 0;
+        let mut count: i64 = 0;
+        let mut current_start = ranges.iter().nth(0).unwrap().0;
+        let mut current_end = ranges.iter().nth(0).unwrap().1;
+        while index < ranges.len() {
+            let this_end = ranges.iter().nth(index).unwrap().1;
+            if this_end > current_end {
+                current_end = this_end;
+            }
+            if index == ranges.len() - 1 {
+                count += current_end - current_start + 1;
+                // println!("{:?}-{:?} final", current_start, current_end);
+                break;
+            }
+            let next_start = ranges.iter().nth(index + 1).unwrap().0;
+
+            if next_start <= current_end {
+                // println!("{:?} <= {:?} no gap", next_start, current_end);
+                index += 1;
+            } else {
+                // There is a gap
+                // println!("{:?}-{:?} gap", current_start, current_end);
+                count += current_end - current_start + 1;
+                index += 1;
+                current_start = ranges.iter().nth(index).unwrap().0;
+            }
+        }
+
+        println!("{:?}", count);
+    }
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
     // day03("./inputs/day03a.txt".to_string(), true);
+    /*
     day04("./inputs/day04mini.txt".to_string(), false); // 13
     day04("./inputs/day04a.txt".to_string(), false); // 1560
     day04("./inputs/day04mini.txt".to_string(), true); // 43
-    day04("./inputs/day04a.txt".to_string(), true); // 
+    day04("./inputs/day04a.txt".to_string(), true); //
+     */
+    day05("./inputs/day05mini.txt".to_string(), false); // 3
+    day05("./inputs/day05a.txt".to_string(), false); // 643
+    day05("./inputs/day05mini.txt".to_string(), true); // 14
+    day05("./inputs/day05a.txt".to_string(), true); // 342018167474526
 }
