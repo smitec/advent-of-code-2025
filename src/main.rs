@@ -355,6 +355,52 @@ pub fn day05(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day06(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut problems: Vec<Vec<String>> = Vec::new();
+    if !part_b {
+        let mut first_row = true;
+        for line in content.lines() {
+            for (index, item) in line.split_whitespace().enumerate() {
+                if first_row {
+                    problems.push(Vec::new());
+                }
+
+                problems.get_mut(index).unwrap().push(item.to_string());
+            }
+            first_row = false;
+        }
+    } else {
+    }
+
+    let mut total = 0;
+    for problem in problems.iter() {
+        let op = problem.last().unwrap();
+        let mut running = 0;
+        if op == "*" {
+            running = 1;
+        }
+        for val in problem {
+            if val == op {
+                break;
+            }
+            if op == "*" {
+                running *= val.parse::<i64>().unwrap();
+            } else {
+                // only other option is +
+                running += val.parse::<i64>().unwrap();
+            }
+        }
+        total += running;
+    }
+
+    println!("{:?}", total);
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
@@ -365,8 +411,13 @@ fn main() {
     day04("./inputs/day04mini.txt".to_string(), true); // 43
     day04("./inputs/day04a.txt".to_string(), true); //
      */
+    /*
     day05("./inputs/day05mini.txt".to_string(), false); // 3
     day05("./inputs/day05a.txt".to_string(), false); // 643
     day05("./inputs/day05mini.txt".to_string(), true); // 14
     day05("./inputs/day05a.txt".to_string(), true); // 342018167474526
+    */
+
+    day06("./inputs/day06mini.txt".to_string(), false); // 4277556
+    day06("./inputs/day06a.txt".to_string(), false); // 3
 }
