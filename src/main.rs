@@ -373,6 +373,63 @@ pub fn day06(filename: String, part_b: bool) -> Result<()> {
             first_row = false;
         }
     } else {
+        // Reverse the rows
+        // Find out how far apart the operators are, they always seem to be column one
+        // The that info to split the other rows and contstruct the numbers
+        let ops = content.lines().last().unwrap();
+        let mut op_list: Vec<String> = Vec::new();
+        let mut lens: Vec<usize> = Vec::new();
+        let mut current_len: usize = 1;
+        for c in ops.chars() {
+            match c {
+                '+' => {
+                    op_list.push(c.to_string());
+                    lens.push(current_len - 1);
+                    current_len = 1;
+                }
+                '*' => {
+                    op_list.push(c.to_string());
+                    lens.push(current_len - 1);
+                    current_len = 1;
+                }
+                ' ' => {
+                    current_len += 1;
+                }
+                _ => {}
+            };
+        }
+        lens.push(current_len);
+        lens.remove(0);
+
+        //  println!("{:?}", lens);
+
+        for (index, i) in lens.iter().enumerate() {
+            let mut v: Vec<String> = Vec::new();
+            for j in 0..*i {
+                v.push("".to_string())
+            }
+            v.push(op_list.get(index).unwrap().clone());
+            problems.push(v);
+        }
+
+        for (index, line) in content.lines().enumerate() {
+            if line.chars().nth(0).unwrap() == '+' || line.chars().nth(0).unwrap() == '*' {
+                break;
+            }
+            let mut line_index = 0;
+            for (p_index, len) in lens.iter().enumerate() {
+                for j in 0..*len {
+                    let current = problems.get(p_index).unwrap().get(j).unwrap();
+                    // println!("{:?} {:?}", len, line_index);
+                    problems.get_mut(p_index).unwrap()[j] =
+                        format!("{}{}", current, line.chars().nth(line_index).unwrap());
+                    line_index += 1;
+                }
+                line_index += 1;
+            }
+        }
+
+        // println!("{:?}", problems);
     }
 
     let mut total = 0;
@@ -387,10 +444,10 @@ pub fn day06(filename: String, part_b: bool) -> Result<()> {
                 break;
             }
             if op == "*" {
-                running *= val.parse::<i64>().unwrap();
+                running *= val.replace(" ", "").parse::<i64>().unwrap();
             } else {
                 // only other option is +
-                running += val.parse::<i64>().unwrap();
+                running += val.replace(" ", "").parse::<i64>().unwrap();
             }
         }
         total += running;
@@ -420,4 +477,6 @@ fn main() {
 
     day06("./inputs/day06mini.txt".to_string(), false); // 4277556
     day06("./inputs/day06a.txt".to_string(), false); // 3
+    day06("./inputs/day06mini.txt".to_string(), true); // 4277556
+    day06("./inputs/day06a.txt".to_string(), true); // 4277556
 }
