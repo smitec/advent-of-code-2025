@@ -420,7 +420,6 @@ pub fn day06(filename: String, part_b: bool) -> Result<()> {
             for (p_index, len) in lens.iter().enumerate() {
                 for j in 0..*len {
                     let current = problems.get(p_index).unwrap().get(j).unwrap();
-                    // println!("{:?} {:?}", len, line_index);
                     problems.get_mut(p_index).unwrap()[j] =
                         format!("{}{}", current, line.chars().nth(line_index).unwrap());
                     line_index += 1;
@@ -458,6 +457,68 @@ pub fn day06(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day07(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut row_vec: HashMap<usize, i64> = HashMap::new();
+    let mut hit = 0;
+
+    for row in content.lines() {
+        let mut next_row: HashMap<usize, i64> = HashMap::new();
+        for (index, value) in row.chars().enumerate() {
+            match value {
+                'S' => {
+                    next_row.insert(index, 1);
+                    break; // Assuming only thing on the S row...
+                }
+                '^' => {
+                    // Check if there was a spot above
+                    if let Some(v) = row_vec.get(&index) {
+                        hit += 1;
+
+                        let mut next_v: i64 = *v;
+                        if let Some(q) = next_row.get(&(index - 1)) {
+                            next_v = q + v;
+                        }
+                        next_row.insert(index - 1, next_v);
+
+                        let mut next_v: i64 = *v;
+                        if let Some(q) = next_row.get(&(index + 1)) {
+                            next_v = q + v;
+                        }
+                        next_row.insert(index + 1, next_v);
+                    }
+                }
+                '.' => {
+                    // Check if there was a spot above
+                    if let Some(v) = row_vec.get(&index) {
+                        let mut next_v: i64 = *v;
+                        if let Some(q) = next_row.get(&index) {
+                            next_v = q + v;
+                        }
+                        next_row.insert(index, next_v);
+                    }
+                }
+                _ => {}
+            }
+        }
+        row_vec = next_row;
+    }
+
+    println!("{:?}", hit);
+
+    if part_b {
+        let mut b_count = 0;
+        for (k, v) in row_vec.iter() {
+            b_count += v;
+        }
+        println!("{:?}", b_count);
+    }
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
@@ -475,8 +536,15 @@ fn main() {
     day05("./inputs/day05a.txt".to_string(), true); // 342018167474526
     */
 
+    /*
     day06("./inputs/day06mini.txt".to_string(), false); // 4277556
     day06("./inputs/day06a.txt".to_string(), false); // 3
     day06("./inputs/day06mini.txt".to_string(), true); // 4277556
     day06("./inputs/day06a.txt".to_string(), true); // 4277556
+    */
+
+    day07("./inputs/day07mini.txt".to_string(), false); // 21
+    day07("./inputs/day07a.txt".to_string(), false); // 1667
+    day07("./inputs/day07mini.txt".to_string(), true); // 40
+    day07("./inputs/day07a.txt".to_string(), true); // 
 }
