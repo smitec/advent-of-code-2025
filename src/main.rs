@@ -519,6 +519,153 @@ pub fn day07(filename: String, part_b: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day08(filename: String, part_b: bool, n: usize) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut nodes: Vec<(i64, i64, i64)> = Vec::new();
+
+    for line in content.lines() {
+        let mut parts = line.split(',');
+
+        // Nth(0) because consuming moves the pointer
+        nodes.push((
+            parts.nth(0).unwrap().parse::<i64>().unwrap(),
+            parts.nth(0).unwrap().parse::<i64>().unwrap(),
+            parts.nth(0).unwrap().parse::<i64>().unwrap(),
+        ));
+    }
+
+    let node_count = nodes.len();
+
+    println!("Loaded {:?} Nodes", node_count);
+
+    // Not the most efficient choice of data structure but it'll do
+    let mut distances: HashMap<(usize, usize), Option<i64>> = HashMap::new();
+
+    for i in 0..node_count {
+        println!("{}/{}", i, node_count);
+        for j in 0..i {
+            if i == j {
+                continue;
+            }
+
+            let a = nodes.get(i).unwrap();
+            let b = nodes.get(j).unwrap();
+
+            let d = (b.0 - a.0).pow(2) + (b.1 - a.1).pow(2) + (b.2 - a.2).pow(2);
+
+            distances.insert((i, j), Some(d));
+        }
+    }
+
+    let mut circuits_labels: HashMap<usize, usize> = HashMap::new();
+    let mut circuit_index = 0;
+
+    // Get the distances as items and sort them
+    let mut d_values: Vec<((usize, usize), i64)> = distances
+        .iter()
+        .filter(|x| !matches!(x.1, None))
+        .sorted_by(|a, b| a.1.cmp(b.1))
+        .rev()
+        .map(|x| (*x.0, x.1.unwrap()))
+        .collect();
+
+    if !part_b {
+        for i in 0..n {
+            println!("{}/{}", i, n);
+
+            let pair = d_values.pop().unwrap();
+
+            let idx_1 = pair.0.0;
+            let idx_2 = pair.0.1;
+
+            for idx in [idx_1, idx_2] {
+                if let Some(v) = circuits_labels.get(&idx) {
+                    // Find all items with value v and replace them with current index
+                    let to_remap: Vec<usize> = circuits_labels
+                        .iter()
+                        .filter(|x| x.1 == v)
+                        .map(|x| *x.0)
+                        .collect();
+                    for key in to_remap {
+                        circuits_labels.insert(key, circuit_index);
+                    }
+                    circuits_labels.insert(idx, circuit_index);
+                } else {
+                    // Label the node with the current index
+                    circuits_labels.insert(idx, circuit_index);
+                }
+            }
+
+            // Update the distance to None for i,j and j,i
+            distances.remove(&(idx_1, idx_2));
+            distances.remove(&(idx_2, idx_1));
+
+            circuit_index += 1;
+        }
+
+        let mut total = 1;
+        let mut sizes: Vec<usize> = Vec::new();
+        for i in 0..circuit_index {
+            let circuit_size = circuits_labels.iter().filter(|x| *x.1 == i).count();
+            sizes.push(circuit_size);
+        }
+
+        for v in sizes.iter().sorted().rev().take(3) {
+            total *= v;
+        }
+
+        println!("{:?}", total);
+    } else {
+        let mut pair: ((usize, usize), i64) = ((0, 0), 0);
+        while circuits_labels.len() < node_count {
+            println!("{}/{}", circuits_labels.len(), node_count);
+
+            pair = d_values.pop().unwrap();
+
+            let idx_1 = pair.0.0;
+            let idx_2 = pair.0.1;
+
+            for idx in [idx_1, idx_2] {
+                if let Some(v) = circuits_labels.get(&idx) {
+                    // Find all items with value v and replace them with current index
+                    let to_remap: Vec<usize> = circuits_labels
+                        .iter()
+                        .filter(|x| x.1 == v)
+                        .map(|x| *x.0)
+                        .collect();
+                    for key in to_remap {
+                        circuits_labels.insert(key, circuit_index);
+                    }
+                    circuits_labels.insert(idx, circuit_index);
+                } else {
+                    // Label the node with the current index
+                    circuits_labels.insert(idx, circuit_index);
+                }
+            }
+
+            // Update the distance to None for i,j and j,i
+            distances.remove(&(idx_1, idx_2));
+            distances.remove(&(idx_2, idx_1));
+
+            circuit_index += 1;
+        }
+
+        let node_1 = nodes.get(pair.0.0).unwrap();
+        let node_2 = nodes.get(pair.0.1).unwrap();
+
+        println!(
+            "{:?} * {:?} = {:?}",
+            node_1.0,
+            node_2.0,
+            node_1.0 * node_2.0
+        );
+    }
+
+    Ok(())
+}
+
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
@@ -543,8 +690,15 @@ fn main() {
     day06("./inputs/day06a.txt".to_string(), true); // 4277556
     */
 
+    /*
     day07("./inputs/day07mini.txt".to_string(), false); // 21
     day07("./inputs/day07a.txt".to_string(), false); // 1667
     day07("./inputs/day07mini.txt".to_string(), true); // 40
-    day07("./inputs/day07a.txt".to_string(), true); // 
+    day07("./inputs/day07a.txt".to_string(), true); // 62943905501815
+    */
+
+    day08("./inputs/day08mini.txt".to_string(), false, 10); // 40
+    day08("./inputs/day08a.txt".to_string(), false, 1000); // 47040
+    day08("./inputs/day08mini.txt".to_string(), true, 10); // 25272
+    day08("./inputs/day08a.txt".to_string(), true, 10); // 4884971896
 }
