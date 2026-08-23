@@ -1,7 +1,9 @@
 use core::panic;
 use std::{
     collections::{HashMap, HashSet},
-    fs, usize,
+    fs,
+    hash::Hash,
+    usize,
 };
 
 use anyhow::{Context, Result};
@@ -666,6 +668,169 @@ pub fn day08(filename: String, part_b: bool, n: usize) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
+pub fn day09(filename: String, part_b: bool) -> Result<()> {
+    let content = fs::read_to_string(filename).context("Couldn't read input")?;
+
+    let mut nodes: Vec<(i64, i64)> = Vec::new();
+
+    for line in content.lines() {
+        let mut parts = line.split(',');
+
+        // Nth(0) because consuming moves the pointer
+        nodes.push((
+            parts.nth(0).unwrap().parse::<i64>().unwrap(),
+            parts.nth(0).unwrap().parse::<i64>().unwrap(),
+        ));
+    }
+
+    let node_count = nodes.len();
+
+    println!("Loaded {:?} Nodes", node_count);
+
+    let mut distances: HashMap<(usize, usize), i64> = HashMap::new();
+
+    for i in 0..node_count {
+        println!("{}/{}", i, node_count);
+        for j in 0..i {
+            if i == j {
+                continue;
+            }
+
+            let a = nodes.get(i).unwrap();
+            let b = nodes.get(j).unwrap();
+
+            let d = (b.0 - a.0 + 1).abs() * (b.1 - a.1 + 1).abs();
+
+            distances.insert((i, j), d);
+        }
+    }
+
+    let biggest = distances.iter().map(|x| x.1).max();
+
+    println!("biggest={:?}", biggest);
+
+    // Part B things
+    if part_b {
+        let mut board: HashSet<(i64, i64)> = HashSet::new();
+        for (index, node) in nodes.iter().enumerate() {
+            let other_node = nodes.iter().nth((index + 1) % node_count).unwrap();
+            board.insert((node.0, node.1));
+            continue;
+            if node.0 == other_node.0 {
+                // Loop through y
+                let start = node.1.min(other_node.1);
+                let end = node.1.max(other_node.1);
+                for step in start..end {
+                    board.insert((node.0, step));
+                }
+            } else {
+                // Loop through x
+                let start = node.0.min(other_node.0);
+                let end = node.0.max(other_node.0);
+                for step in start..end {
+                    board.insert((step, node.1));
+                }
+            }
+        }
+
+        let mut not_board: HashSet<(i64, i64)> = HashSet::new();
+
+        let min_w = nodes.iter().map(|x| x.1).min().unwrap() - 1;
+        let max_w = nodes.iter().map(|x| x.1).max().unwrap() + 1;
+
+        let min_h = nodes.iter().map(|x| x.0).min().unwrap() - 1;
+        let max_h = nodes.iter().map(|x| x.0).max().unwrap() + 1;
+
+        let mut front: Vec<(i64, i64)> = vec![(min_h - 1, min_w - 1)];
+        println!("{:?}", front);
+
+        /*
+        while let Some(val) = front.pop() {
+            println!("front->{:?}", front.len());
+            for or in [-1, 0, 1] {
+                for oc in [-1, 0, 1] {
+                    let offset = (or, oc);
+                    let new_val = (val.0 + offset.0, val.1 + offset.1);
+                    if new_val.0 >= min_h
+                        && new_val.0 < max_h
+                        && new_val.1 >= min_w
+                        && new_val.1 < max_w
+                    {
+                        if let None = board.get(&new_val)
+                            && let None = not_board.get(&new_val)
+                        {
+                            not_board.insert(new_val);
+                            front.push(new_val);
+                        }
+                    }
+                }
+            }
+        }
+        */
+
+        /*
+                for r in 0..max_h {
+                    for c in 0..max_w {
+                        if let Some(_) = board.get(&(r, c)) {
+                            print!(".");
+                        } else {
+                            print!("#");
+                        }
+                    }
+                    println!();
+                }
+        */
+
+        let mut distances: HashMap<(usize, usize), i64> = HashMap::new();
+
+        for i in 0..node_count {
+            println!("{}/{}", i, node_count);
+            for j in 0..i {
+                if i == j {
+                    continue;
+                }
+
+                let a = nodes.get(i).unwrap();
+                let b = nodes.get(j).unwrap();
+
+                let d = (b.0 - a.0 + 1).abs() * (b.1 - a.1 + 1).abs();
+
+                let min_r = a.0.min(b.0);
+                let max_r = a.0.max(b.0);
+
+                let min_c = a.1.min(b.1);
+                let max_c = a.1.max(b.1);
+
+                let mut okay = true;
+
+                for r in min_r + 1..max_r {
+                    if !okay {
+                        break;
+                    }
+                    for c in min_c + 1..max_c {
+                        if let Some(_) = board.get(&(r, c)) {
+                            okay = false;
+                            break;
+                        }
+                    }
+                }
+
+                if okay {
+                    distances.insert((i, j), d);
+                }
+            }
+        }
+
+        let biggest = distances.iter().map(|x| x.1).max();
+
+        println!("biggest={:?}", biggest);
+    }
+
+    // This isn't working, maybe we can check if squares have other edges in them?
+
+    Ok(())
+}
 fn main() {
     // day01("./inputs/day01a.txt".to_string(), true);
     // day02("./inputs/day02a.txt".to_string(), true);
@@ -697,8 +862,15 @@ fn main() {
     day07("./inputs/day07a.txt".to_string(), true); // 62943905501815
     */
 
+    /*
     day08("./inputs/day08mini.txt".to_string(), false, 10); // 40
     day08("./inputs/day08a.txt".to_string(), false, 1000); // 47040
     day08("./inputs/day08mini.txt".to_string(), true, 10); // 25272
     day08("./inputs/day08a.txt".to_string(), true, 10); // 4884971896
+    */
+
+    //day09("./inputs/day09mini.txt".to_string(), false); // 50
+    //day09("./inputs/day09a.txt".to_string(), false); // 4715966250
+    day09("./inputs/day09mini.txt".to_string(), true); // 24
+    //day09("./inputs/day09a.txt".to_string(), true); // 24
 }
